@@ -4,21 +4,23 @@ import { Storage } from "@google-cloud/storage";
 // Your Google Cloud Platform project ID
 const projectId = "sheets-api-1535602364382";
 
-// Creates a client
-const storage = new Storage({ projectId });
+export interface IFileOptions {
+    projectId: string;
+    bucketName: string;
+    fileName: string;
+}
 
-// The name for the new bucket
-const bucketName = "pdf-parser";
-const fileName = "test.pdf";
+export const readFileStream = (options: IFileOptions) => () => new Promise((resolve, reject) => {
+    // Creates a client
+    const storage = new Storage({ projectId: options.projectId });
 
-const myBucket = storage.bucket(bucketName);
-
-export const readFileStream = (path: string) => new Promise((resolve, reject) => {
-    let buffer = Buffer.alloc(0);
+    // The name for the new bucket
+    const myBucket = storage.bucket(options.bucketName);
 
     // Creates the new bucket
-    const file = myBucket.file(fileName);
+    const file = myBucket.file(options.fileName);
 
+    let buffer = Buffer.alloc(0);
     file.createReadStream()
         .on("error", (err: any) => reject(err))
         .on("data", (chunk: Buffer) => buffer = Buffer.concat([buffer, chunk]))
