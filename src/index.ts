@@ -1,12 +1,9 @@
-import { readFile } from "fs";
 import pdf from "pdf-parse";
 
-const readFilePromise = (path: string) => new Promise((resolve, reject) => {
-    readFile(path, (err, data) => err ? reject(err) : resolve(data));
-});
+import { readFileStream } from "./cloud-storage";
 
 // tslint:disable:no-console
-readFilePromise("./fixtures/test.pdf")
+readFileStream("./fixtures/test.pdf")
     .then(pdf)
     .then((data: any) => {
         // number of pages
@@ -22,4 +19,5 @@ readFilePromise("./fixtures/test.pdf")
         console.log(data.version);
         // PDF text
         console.log(data.text);
-    });
+    })
+    .catch((err) => console.error(err));
