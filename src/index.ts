@@ -1,9 +1,6 @@
 import pdf from "pdf-parse";
 
-/*
-import { readFileStream } from "./local-storage";
-const fileStream = readFileStream("./fixtures/test.pdf");
-*/
+import { Request, Response } from "express";
 
 import { readFileStream } from "./cloud-storage";
 const fileStream = readFileStream({
@@ -12,6 +9,19 @@ const fileStream = readFileStream({
     projectId: "sheets-api-1535602364382",
 });
 
+export const parsePDF = (req: Request, res: Response) => {
+    fileStream()
+        .then(pdf)
+        .then((data: any) => res.send(data.text))
+        .catch((err) => res.status(500).send(err));
+};
+
+/*
+import { readFileStream } from "./local-storage";
+const fileStream = readFileStream("./fixtures/test.pdf");
+*/
+
+/*
 // tslint:disable:no-console
 fileStream()
     .then(pdf)
@@ -31,3 +41,4 @@ fileStream()
         console.log(data.text);
     })
     .catch((err) => console.error(err));
+*/
