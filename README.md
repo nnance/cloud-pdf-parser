@@ -1,6 +1,6 @@
 # cloud-pdf-parser
 
-PDF Parser via Google Functions
+PDF Parser via Google Functions.  It will parse a file stored in Google Cloud Storage and return a JSON object that is returned by the parse library [pdf-parse](https://www.npmjs.com/package/pdf-parse).  It is also designed to transform the text which is a table and include a values proprty that includes the table data.
 
 ## Getting Started
 
