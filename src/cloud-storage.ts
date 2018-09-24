@@ -1,9 +1,6 @@
 // Imports the Google Cloud client library
 import { Storage } from "@google-cloud/storage";
 
-// Your Google Cloud Platform project ID
-const projectId = "sheets-api-1535602364382";
-
 export interface IFileOptions {
     projectId: string;
     bucketName: string;

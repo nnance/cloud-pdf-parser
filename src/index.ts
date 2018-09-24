@@ -3,42 +3,39 @@ import pdf from "pdf-parse";
 import { Request, Response } from "express";
 
 import { readFileStream } from "./cloud-storage";
-const fileStream = readFileStream({
-    bucketName: "pdf-parser",
-    fileName: "test.pdf",
-    projectId: "sheets-api-1535602364382",
-});
+import { readFileStream as readLocalFileStream } from "./local-storage";
+import { getValues } from "./transform";
 
-export const parsePDF = (req: Request, res: Response) => {
+const bucketName = "pdf-parser";
+const projectId = "sheets-api-1535602364382";
+
+const addValues = (pdfObj: any) => Promise.resolve(
+    Object.assign(pdfObj, {
+        values: getValues(pdfObj.text),
+    }),
+);
+
+const parseStream = (fileStream: () => Promise<{}>, req: Request, res: Response) => {
     fileStream()
         .then(pdf)
-        .then((data: any) => res.send(data.text))
+        .then(addValues)
+        .then((results) => res.send(results))
         .catch((err) => res.status(500).send(err));
 };
 
-/*
-import { readFileStream } from "./local-storage";
-const fileStream = readFileStream("./fixtures/test.pdf");
-*/
+export const parsePDF = (req: Request, res: Response) => {
+    const fileName = req.body.fileName;
 
-/*
-// tslint:disable:no-console
-fileStream()
-    .then(pdf)
-    .then((data: any) => {
-        // number of pages
-        console.log(data.numpages);
-        // number of rendered pages
-        console.log(data.numrender);
-        // PDF info
-        console.log(data.info);
-        // PDF metadata
-        console.log(data.metadata);
-        // PDF.js version
-        // check https://mozilla.github.io/pdf.js/getting_started/
-        console.log(data.version);
-        // PDF text
-        console.log(data.text);
-    })
-    .catch((err) => console.error(err));
-*/
+    if (!fileName) {
+        res.status(500).send({ error: "must provide a fileName" });
+    } else {
+        const fileStream = readFileStream({ bucketName, fileName, projectId });
+        parseStream(fileStream, req, res);
+    }
+
+};
+
+export const parseLocalPDF = (req: Request, res: Response) => {
+    const fileStream = readLocalFileStream("./fixtures/test.pdf");
+    parseStream(fileStream, req, res);
+};
