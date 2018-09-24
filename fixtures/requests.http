@@ -1,0 +1,18 @@
+POST http://localhost:4000/parsePDF HTTP/1.1
+content-type: application/json
+
+{
+    "fileName": "test.pdf"
+}
+
+###
+
+POST https://us-central1-thrift-shop-197115.cloudfunctions.net/parsePDF HTTP/1.1
+content-type: application/json
+
+{
+    "fileName": "test.pdf"
+}
+
+###
+
