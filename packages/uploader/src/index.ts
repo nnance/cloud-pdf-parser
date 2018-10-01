@@ -1,16 +1,13 @@
-import fs from "fs";
-import os from "os";
-import path from "path";
-
-import Busboy from "busboy";
 import Cors from "cors";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
 import { Storage } from "@google-cloud/storage";
 
+import Multer from "multer";
+
 const cors = Cors({ origin: true });
 
-const bucketName = "pdf-parser";
+const CLOUD_BUCKET = "pdf-parser";
 const projectId = "sheets-api-1535602364382";
 
 const gcconfig = {
@@ -20,43 +17,58 @@ const gcconfig = {
 
 const gcs = new Storage(gcconfig);
 
-export const uploadFile = (req: Request, res: Response) => {
-  cors(req, res, () => {
-    if (req.method !== "POST") {
-        return res.status(500).json({
-            message: "Not allowed",
-        });
+// The name for the new bucket
+const bucket = gcs.bucket(CLOUD_BUCKET);
+
+const multer = Multer({
+    limits: {
+        fileSize: 5 * 1024 * 1024, // no larger than 5mb
+    },
+    storage: Multer.memoryStorage(),
+});
+
+function getPublicUrl(filename: string) {
+    return `https://storage.googleapis.com/${CLOUD_BUCKET}/${filename}`;
+}
+
+function uploader(req: any, res: Response, next: NextFunction) {
+    if (!req.file) {
+        // tslint:disable-next-line:no-console
+        console.log("file doesn't exist");
+        return next();
     }
-    const busboy = new Busboy({ headers: req.headers });
-    let uploadData: any = {};
 
-    busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
-        const filepath = path.join(os.tmpdir(), filename);
-        uploadData = { file: filepath, type: mimetype };
-        file.pipe(fs.createWriteStream(filepath));
+    const gcsname = Date.now() + req.file.originalname;
+    const file = bucket.file(gcsname);
+
+    const stream = file.createWriteStream({
+        metadata: {
+            contentType: req.file.mimetype,
+        },
+        resumable: false,
     });
 
-    busboy.on("finish", () => {
-        gcs.bucket(bucketName)
-            .upload(uploadData.file, {
-                metadata: {
-                    metadata: {
-                        contentType: uploadData.type,
-                    },
-                },
-                uploadType: "media",
-            }, (err: any) => {
-                if (err) {
-                    res.status(500).json({
-                        error: err,
-                    });
-                } else {
-                    res.status(200).json({
-                        message: "It worked!",
-                    });
-                }
-            });
+    stream.on("error", (err: any) => {
+        req.file.cloudStorageError = err;
+        next(err);
     });
-    busboy.end(req.body);
-  });
+
+    stream.on("finish", () => {
+        req.file.cloudStorageObject = gcsname;
+        file.makePublic(() => {
+            req.file.cloudStoragePublicUrl = getPublicUrl(gcsname);
+            next();
+        });
+    });
+
+    stream.end(req.file.buffer);
+}
+
+export const uploadFile = (req: any, res: Response, next: NextFunction) => {
+    const sendFileName = () => {
+        const fileName = req.file && req.file.cloudStoragePublicUrl ? req.file.cloudStoragePublicUrl : "error";
+        res.send({fileName});
+    };
+    const upload = () => uploader(req, res, sendFileName);
+    multer.single("fileName")(req, res, upload);
 };

@@ -4,8 +4,9 @@
   "description": "Example scalable Cloud Functions project",
   "main": "./packages/overall/dist/index.js",
   "scripts": {
-    "build": "tslint ./src/**/*.ts && tsc",
-    "watch": "nodemon ./dist/server.js",
+    "bootstrap": "lerna bootstrap",
+    "build": "lerna run build",
+    "postinstall": "lerna bootstrap",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
