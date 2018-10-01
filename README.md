@@ -59,3 +59,14 @@ Test Cloud Function
 ```ssh
 $ curl -X POST -H "Content-Type: application/json" -d "{ \"fileName\": \"test.pdf\" }" https://GCP_REGION-PROJECT_ID.cloudfunctions.net/parsePDF
 ```
+
+## To Do
+
+Open project to do list
+
+- [ ] Create a private npm registry to allow the functions to be deployed to Google.  References
+
+* [Private NPM Packages with Google Cloud Functions](https://hackernoon.com/private-npm-packages-with-google-cloud-functions-4cdfb13c37cc)
+* [Working with private packages](https://docs.npmjs.com/private-modules/intro)
+
+- [ ] Namespace the package names so that they can be deployed to a private npm registery
